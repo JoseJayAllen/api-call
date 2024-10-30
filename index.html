@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Removal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <div>
+        <h1>Remove Background</h1>
+        <input type="text" id="imageURL" placeholder="Enter Image URL">
+        <input type= "file" id="imageFile" accept="image/*">
+        <button id="processImage">Remove Background</button>
+        <div id="result">
+            <!--Display processed image-->
+        </div>
+    </div>
+
+    <div id="pagination">
+        <button id="prevPage" disabled>Previous</button>
+        <button id="nextPage">Next</button>
+    </div>
+    
+    <div id="error"></div>
+    </div>
+    
+    <script src="javascript.js"></script>
+</body>
+</html>
