@@ -1,105 +1,53 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const apiKey = "5e4afb9007msh95784f455c5e22fp16d957jsneaa4dd9fd20a";
-    const apiURL = "https://background-removal.p.rapidapi.com/remove";
-    const apiHost = "background-removal.p.rapidapi.com";
+const apiKey = '5ea3dc9ff2ef85ba7f54ff81';
+const baseCurrency = 'USD';
+const apiUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${baseCurrency}`;
 
-    let currentPage = 0;
-    const itemsPerPage = 1;
-    let processedImages = [];
+let exchangeRates = [];
+let currentPage = 1;
+const ratesPerPage = 10;
 
-    document.getElementById("processImage").addEventListener("click", async () => {
-        const imageURL = document.getElementById("imageURL").value;
-        const imageFile = document.getElementById("imageFile").files[0];
+document.getElementById('next').addEventListener('click', () => changePage(1));
+document.getElementById('prev').addEventListener('click', () => changePage(-1));
 
-        if (!imageURL && !imageFile) {
-            alert("Please enter an image.");
-            return;
-        }
+function fetchRates() {
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.result === 'success') {
+        exchangeRates = Object.entries(data.conversion_rates);
+        displayRates();
+      } else {
+        showError(`Error: ${data['error-type']}`);
+      }
+    })
+    .catch(error => showError('Network error, please try again later.'));
+}
 
-    try {
-        let response;
-        const formData = new FormData();
-        if (imageFile){
-            formData.append("image_file", imageFile);
-        } else if (imageURL) {
-            formData.append("image_url", imageURL);
-        }
+function displayRates() {
+  const tableBody = document.getElementById('exchange-rates');
+  tableBody.innerHTML = '';
 
-        formData.append("output_format","url");
+  const start = (currentPage - 1) * ratesPerPage;
+  const paginatedRates = exchangeRates.slice(start, start + ratesPerPage);
 
-            response = await fetch(apiURL, {
-                method: "POST",
-                headers: {
-                    "x-rapidapi-host": apiHost,
-                    "x-rapidapi-key": apiKey
-                },
-                body: formData
-            });
+  paginatedRates.forEach(([currency, rate]) => {
+    const row = `<tr><td class="border px-4 py-2">${currency}</td><td class="border px-4 py-2">${rate}</td></tr>`;
+    tableBody.insertAdjacentHTML('beforeend', row);
+  });
 
-            await handleResponse(response);
-        } catch (error) {
-            handleError(error);
-        }
-    });
+  document.getElementById('prev').disabled = currentPage === 1;
+  document.getElementById('next').disabled = start + ratesPerPage >= exchangeRates.length;
+}
 
-    async function handleResponse(response) {
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Error: ${response.status} - ${errorMessage}`);
-        }
+function changePage(direction) {
+  currentPage += direction;
+  displayRates();
+}
 
-        const data = await response.json();
-        console.log("Data received:", data);
-        if (data.response && data.response.image_url) {
-            processedImages.push(data.response.image_url);
-            displayImages();
-        } else {
-            throw new Error("Error processing image.");
-        }
-    }
+function showError(message) {
+  const errorMessage = document.getElementById('error-message');
+  errorMessage.textContent = message;
+}
 
-    function displayImages() {
-        const resultDiv = document.getElementById("result");
-        resultDiv.innerHTML = "";
-
-        const startIndex = currentPage * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const imagesToDisplay = processedImages.slice(startIndex,endIndex);
-
-        imagesToDisplay.forEach(url => {
-            const imgElement = document.createElement("img");
-            imgElement.src = url;
-            imgElement.alt = "Processed Image";
-            imgElement.className = "w-full rounded mt-2";
-            resultDiv.appendChild(imgElement);
-        });
-
-        updatePaginationButtons();
-    }
-
-    function updatePaginationButtons() {
-        document.getElementById("prevPage").disabled = currentPage === 0;
-        document.getElementById("nextPage").disabled = (currentPage + 1) *
-        itemsPerPage >= processedImages.length;
-    }
-
-    document.getElementById("prevPage").addEventListener("click", () => {
-        if (currentPage > 0) {
-            currentPage--;
-            displayImages();
-        }
-    });
-
-    document.getElementById("nextPage").addEventListener("click", () => {
-        if ((currentPage + 1) * itemsPerPage < processedImages.length) {
-            currentPage++;
-            displayImages();
-        }
-    });
-
-    function handleError(error) {
-        console.error("An error occured:", error);
-        const errorDiv = document.getElementById("error");
-        errorDiv.textContent = error.message;
-    }
-});
+fetchRates();
+  
